@@ -124,28 +124,7 @@ const Create = () => {
 
                         </div>
                     </div>
-                    <div className="d-flex justify-content-end mt-3">
-
-                        <a><i className='bx bxs-user'></i></a>
-                        <a><i className='bx bx-cart'></i></a>
-
-                        <ul className=" custom-dropdown" >
-                            <li className="nav-item dropdown">
-                                <a className="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                                    aria-expanded="false">
-                                    Dropdown
-                                </a>
-                                <ul className="dropdown-menu">
-                                    <li><a className="dropdown-item" href="#">Action</a></li>
-                                    <li><a className="dropdown-item" href="#">Another action</a></li>
-                                    <li>
-                                        <hr className="dropdown-divider" />
-                                    </li>
-                                    <li><a className="dropdown-item" href="#">Something else here</a></li>
-                                </ul>
-                            </li></ul>
-
-                    </div>
+                    
                 </div>
             </nav>
       <div className="mint-single rounded py-3 px-5">
@@ -185,11 +164,11 @@ const Create = () => {
                   
                 </div>
               <div className="text-center">
-              <br /><input type="button" value={"Select Image"} className="button-25 text-center text-light pr rounded-pill" />
+              <br /><input type="button" value={"Select Image"}  />
               </div>
                 <input
-                  type="file"
-                  style={{ position: "absolute", zIndex: "3", marginTop: "-50px", marginLeft: "-70px", width: "150px", height: "40px", opacity: "0" }}
+                  type="file" className="button-25 text-center text-light pr rounded-pill"
+                  style={{ position: "absolute", zIndex: "3", marginTop: "-50px", marginLeft: "-70px", width: "150px", height: "40px" }}
                   onChange={(e) => {
                     const [file_selected] = e.target.files;
                     setfile(e.target.files[0]);

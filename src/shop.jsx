@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import './assets/css/custom2.css';
 import './assets/css/custom3.css';
-import { signAndConfirmTransactionFe } from "./utilityfunc";
+import { signAndConfirmTransactionFe, signAndConfirmTransaction } from "./utilityfunc";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'jquery/dist/jquery.min.js';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -25,6 +25,14 @@ const Shop = () => {
     const [buy, setBuy] = useState();
     const [nfts, setNfts] = useState();
 
+    const callback = (signature, result) => {
+        console.log("Signature ", signature);
+        console.log("result ", result);
+        if (signature.err === null) {
+            setMinted(saveMinted);
+            setStatus("success: Successfully Signed and Minted.");
+        }
+    }
 
     // Phantom Adaptor
     const solanaConnect = async () => {
@@ -60,7 +68,7 @@ const Shop = () => {
     }
 
     const getNFTsFromMarketPlace = () => {
-       
+
         const marketplaceAddress = "3y4rUzcCRZH4TstRJGYmUUKuod8hd4Rvu2Fnf2FhQoY4";
 
         let nftUrl = `https://api.shyft.to/sol/v1/marketplace/active_listings?network=devnet&marketplace_address=${marketplaceAddress}`;
@@ -92,6 +100,80 @@ const Shop = () => {
                 console.warn(err);
             });
     }
+    const listNFT = (nft_addr) => {
+
+
+        let nftUrl1 = `https://api.shyft.to/sol/v1/marketplace/list`;
+
+        axios({
+            // Endpoint to list
+            url: nftUrl1,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-api-key": xKey,
+            },
+            data: {
+                network: 'devnet',
+                marketplace_address: "3y4rUzcCRZH4TstRJGYmUUKuod8hd4Rvu2Fnf2FhQoY4",
+                nft_address: nft_addr,
+                price: 1,
+                seller_wallet: wallID
+            }
+        })
+            // Handle the response from backend here
+            .then(async (res) => {
+                console.log(res.data);
+                //setIsListing(false);
+                if (res.data.success === true) {
+                    //setOkModal(true);
+
+                    const transaction = res.data.result.encoded_transaction;
+                    const ret_result = await signAndConfirmTransactionFe('devnet', transaction, callback);
+                    console.log(ret_result);
+                    //setListingPrice(0);
+                } else {
+                    //setFailedModal(true);
+                    //setShowLister(false);
+                }
+
+            })
+            // Catch errors if any
+            .catch((err) => {
+                console.error(err); // In ra lỗi để xem chi tiết về lỗi
+            });
+    }
+
+    const fetchNFTs = () => {
+        //e.preventDefault();
+
+        //Note, we are not mentioning update_authority here for now
+        let nftUrl = `https://api.shyft.to/sol/v1/nft/read_all?network=${network}&address=${wallID}`;
+        axios({
+            // Endpoint to send files
+            url: nftUrl,
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "x-api-key": xKey,
+            },
+            // Attaching the form data
+        })
+            // Handle the response from backend here
+            .then((res) => {
+                console.log(res.data);
+                setDataFetched(res.data);
+                setLoaded(true);
+            })
+
+            // Catch errors if any
+            .catch((err) => {
+                console.warn(err);
+            });
+    };
+
+
+
     return (
 
         <div className=" gradient-background">
@@ -157,13 +239,15 @@ const Shop = () => {
                     </div>
                 </div>)}
 
+
+
                 {connStatus && (<div className="">
                     <div className="">
                         <form>
                             <div className="">
                                 <div className="">
                                     <input
-                                        type="hidden"
+                                        type="text"
                                         className="form-control"
                                         placeholder="Enter Wallet Id"
                                         value={wallID}
@@ -172,10 +256,41 @@ const Shop = () => {
                                 </div>
                             </div>
                         </form>
-                        <div className="text-center pb-5">
+                        <div className="text-center p-3">
+                            <button
+                                className="btn btn-primary"
+                                onClick={fetchNFTs}
+                            >
+                                Get NFTs
+                            </button>
                         </div>
                     </div>
                 </div>)}
+
+
+
+                <div className="row">
+                    {isLoaded &&
+                        dataFetched.result.map((item) => (
+                            <div className="" key={item.mint}>
+                                <div className="col-md-4">
+                                    <div className="col-sm-4">
+                                        <a href={`/get-details?token_address=${item.mint}&apiKey=${xKey}`} target="_blank" rel="noreferrer">
+                                            <img style={{
+                                                width: "200px"
+                                            }} className="img-fluid" src={item.image_uri} alt="img" />
+                                        </a>
+                                        <a href={`/get-details?token_address=${item.mint}&apiKey=${xKey}`} target="_blank" rel="noreferrer">
+                                            <h5>{item.name}</h5>
+                                        </a>
+                                        <button className="button-24 buy-button" onClick={() => listNFT(item.mint)}>Buy</button>                                        {item.mint}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                </div>
+
+
 
                 <div className="row">
                     {isLoadedMarketPlaceNFTs &&
@@ -198,21 +313,18 @@ const Shop = () => {
                                     </div>
                                 </div>
                                 <div className="col-lg-12 text-center mt-2">
-                                        <a
-                                            href={`/get-details?token_address=${item.nft_address}&apiKey=${xKey}`}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="link-no-underline"
-                                        >
-                                            <h5>{item.nft.name}</h5>
-                                        </a>
-                                    </div>
+                                    <a
+                                        href={`/get-details?token_address=${item.nft_address}&apiKey=${xKey}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="link-no-underline"
+                                    >
+                                        <h5>{item.nft.name}</h5>
+                                        <h5>{item.price}</h5>
+
+                                    </a>
+                                </div>
                             </div>
-
-
-
-
-
                         ))}
                 </div>
 
